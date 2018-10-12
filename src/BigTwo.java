@@ -192,20 +192,31 @@ public class BigTwo extends Game {
 	private ArrayList<Card[]> pokerFullHouse(Card[] hand) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
 		
-		System.out.println(this.identifyPokerMoveRank(this.lastCards));
+		int lastRank = this.identifyPokerMoveRank(this.lastCards);
+		int toBeat = -1;
+		// Get the rank to beat if previous move is a Full House
+		if(lastRank == 3) {
+			int[] ranks = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			for(int i = 0; i < this.lastCards.length; i++) {
+				ranks[this.lastCards[i].getRank()]++;
+			}
+			for(int i = 0; i < ranks.length; i++) {
+				if(ranks[i] == 3) {
+					toBeat = i;
+				}
+			}
+		}
 		
-		if(this.lastCards == null || this.identifyPokerMoveRank(this.lastCards) <= 3) {
+		if(this.lastCards == null || lastRank <= 3) {
 			ArrayList<Card[]> doubles = this.matchRank(2, true);
 			ArrayList<Card[]> triples = this.matchRank(3, true);
-			
-			System.out.println(doubles.size() + " " + triples.size());
 			
 			if(triples.size() != 0 && doubles.size() !=0) {
 				for(int i = 0; i < triples.size(); i++) {
 					Card[] tripleCards = triples.get(i);
 					for(int j = 0; j < doubles.size(); j++) {
 						Card[] doubleCards = doubles.get(j);
-						if(!tripleCards[0].sameRank(doubleCards[0])) {
+						if(!tripleCards[0].sameRank(doubleCards[0]) && (lastRank < 3 || tripleCards[0].getRank() > toBeat)) {
 							Card[] temp = {tripleCards[0], tripleCards[1], tripleCards[2], doubleCards[0], doubleCards[1]};
 							moves.add(temp);
 						}
