@@ -129,7 +129,7 @@ public class BigTwo extends Game {
 	
 	// Nothing 0, Straight: 1, Flush: 2, Full House: 3, Four of a Kind: 4, Straight Flush: 5
 	private int identifyPokerMoveRank(Card[] move) {
-		if(move.length != 5) {
+		if(move == null || move.length != 5) {
 			return 0;
 		}
 		boolean inOrder = true;
@@ -177,7 +177,71 @@ public class BigTwo extends Game {
 		}
 	}
 	
-	private ArrayList<Card[]> matchRank(int numMatch) {
+	private ArrayList<Card[]> pokerStraight(Card[] hand) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		return moves;
+	}
+	
+	private ArrayList<Card[]> pokerFlush(Card[] hand) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		return moves;
+	}
+	
+	private ArrayList<Card[]> pokerFullHouse(Card[] hand) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		System.out.println(this.identifyPokerMoveRank(this.lastCards));
+		
+		if(this.lastCards == null || this.identifyPokerMoveRank(this.lastCards) <= 3) {
+			ArrayList<Card[]> doubles = this.matchRank(2, true);
+			ArrayList<Card[]> triples = this.matchRank(3, true);
+			
+			System.out.println(doubles.size() + " " + triples.size());
+			
+			if(triples.size() != 0 && doubles.size() !=0) {
+				for(int i = 0; i < triples.size(); i++) {
+					Card[] tripleCards = triples.get(i);
+					for(int j = 0; j < doubles.size(); j++) {
+						Card[] doubleCards = doubles.get(j);
+						if(!tripleCards[0].sameRank(doubleCards[0])) {
+							Card[] temp = {tripleCards[0], tripleCards[1], tripleCards[2], doubleCards[0], doubleCards[1]};
+							moves.add(temp);
+						}
+					}
+				}
+			}
+		}
+		
+		return moves;
+	}
+	
+	private ArrayList<Card[]> pokerFourKind(Card[] hand) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		return moves;
+	}
+	private ArrayList<Card[]> pokerSFlush(Card[] hand) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		return moves;
+	}
+	
+	private ArrayList<Card[]> pokerMove() {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		Card[] current = this.hands[this.currentTurn].getHand();
+
+		moves.addAll(pokerStraight(current));
+		moves.addAll(pokerFlush(current));
+		moves.addAll(pokerFullHouse(current));
+		moves.addAll(pokerFourKind(current));
+		moves.addAll(pokerSFlush(current));
+		
+		return moves;
+	}
+	
+	private ArrayList<Card[]> matchRank(int numMatch, boolean any) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
 		Card[] current = this.hands[this.currentTurn].getHand();
 		for(int i = 0; i < current.length; i++) {
@@ -195,13 +259,18 @@ public class BigTwo extends Game {
 			if(sameRank.size() >= numMatch) {
 				ArrayList<Card[]> possibleMoves = allCombos(sameRank, numMatch);
 				for(int j = 0; j < possibleMoves.size(); j++) {
-					if(!inMoves(possibleMoves.get(j), moves) && this.checkLevel(possibleMoves.get(j))) {
+					if(!inMoves(possibleMoves.get(j), moves) && (this.checkLevel(possibleMoves.get(j)) || any)) {
 						moves.add(possibleMoves.get(j));
 					}
 				}
 			}
 		}
 		return moves;
+
+	}
+	
+	private ArrayList<Card[]> matchRank(int numMatch) {
+		return matchRank(numMatch, false);
 	}
 	
 	private ArrayList<Card[]> possibleSingles() {
@@ -230,6 +299,7 @@ public class BigTwo extends Game {
 			moves.addAll(this.matchRank(2));
 			moves.addAll(this.matchRank(3));
 			moves.addAll(this.matchRank(4));
+			moves.addAll(this.pokerMove());
 		} else if(this.lastCards.length == 1) {
 			moves.addAll(this.possibleSingles());
 		} else if(this.lastCards.length == 2) {
@@ -238,6 +308,8 @@ public class BigTwo extends Game {
 			moves.addAll(this.matchRank(3));
 		} else if(this.lastCards.length == 4) {
 			moves.addAll(this.matchRank(4));
+		} else if(this.lastCards.length == 5) {
+			moves.addAll(this.pokerMove());
 		}
 		this.possibleMoves = moves;
 	}

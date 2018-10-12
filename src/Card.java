@@ -52,10 +52,10 @@ public class Card implements Comparable<Card> {
 		}
 		
 		public boolean sameRank(Card card) {
-			return this.rank == card.card()[0];
+			return this.rank == card.getRank();
 		}
 		
 		public boolean sameSuit(Card card) {
-			return this.suit == card.card()[1];
+			return this.suit == card.getSuit();
 		}
 }
