@@ -12,7 +12,7 @@ public class Main {
 		BigTwo game = new BigTwo(playerNum);
 		
 		while(game.currentTurn() != -1) {
-			System.out.println("It is player " + game.currentTurn() + "'s turn");
+			System.out.println("It is player " + (game.currentTurn() + 1) + "'s turn");
 			Card[] hand = game.currentHand();
 			Arrays.sort(hand);
 			System.out.println(Arrays.toString(hand));

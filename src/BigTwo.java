@@ -186,6 +186,51 @@ public class BigTwo extends Game {
 	private ArrayList<Card[]> pokerFlush(Card[] hand) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
 		
+		int lastRank = this.identifyPokerMoveRank(this.lastCards);
+		Card toBeat = null;
+		// Get the rank to beat if previous move is a Flush
+		if(lastRank == 2) {
+			for(int i = 0; i < this.lastCards.length; i++) {
+				if(toBeat == null || this.lastCards[i].compareTo(toBeat) == 1) {
+					toBeat = this.lastCards[i];
+				}
+			}
+		}
+		
+		if(lastRank <= 2) {
+			int[] suitCount = {0, 0, 0, 0};
+			for(int i = 0; i < hand.length; i++) {
+				suitCount[hand[i].getSuit()]++;
+			}
+			for(int i = 0; i < suitCount.length; i++) {
+				if(suitCount[i] >= 5) {
+					ArrayList<Card> allOfSuit = new ArrayList<Card>();
+					for(int j = 0; j < hand.length; j++) {
+						if(hand[j].getSuit() == i) {
+							allOfSuit.add(hand[j]);
+						}
+					}
+					
+					ArrayList<Card[]> combos = allCombos(allOfSuit, 5);
+					for(int j = 0; j < combos.size(); j++) {
+						Card[] move = combos.get(j);
+						if(lastRank == 2) {
+							for(int x = 0; x < move.length; x++) {
+								Card card = move[x];
+								if(toBeat.compareTo(card) == -1) {
+									moves.add(move);
+									break;
+								}
+							}
+						} else {
+							moves.add(move);
+						}
+					}
+					//moves.addAll(allCombos(allOfSuit, 5));
+				}
+			}
+		}
+		
 		return moves;
 	}
 	
@@ -233,7 +278,7 @@ public class BigTwo extends Game {
 		
 		int lastRank = this.identifyPokerMoveRank(this.lastCards);
 		int toBeat = -1;
-		// Get the rank to beat if previous move is a Full House
+		// Get the rank to beat if previous move is a Four of a Kind
 		if(lastRank == 4) {
 			int[] ranks = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 			for(int i = 0; i < this.lastCards.length; i++) {
