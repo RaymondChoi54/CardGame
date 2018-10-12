@@ -1,0 +1,322 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public class BigTwo extends Game {
+	
+	private int numPlayers;
+	private CardDeck deck;
+	private Hand[] hands;
+	private Card[] lastCards;
+	private int currentTurn;
+	private ArrayList<Card[]> possibleMoves;
+	private boolean[] pass;
+	
+	public BigTwo(int numPlayers) {
+		this.numPlayers = numPlayers;
+		this.deck = new CardDeck();
+		this.deck.Shuffle();
+		this.hands = new Hand[numPlayers];
+		for(int i = 0; i < numPlayers; i++) {
+			this.hands[i] = new Hand(new Card[0]);
+		}
+		int currentPlayer = 0;
+		while(this.deck.cardsLeft() > 0) {
+			this.hands[currentPlayer].addCard(this.deck.nextCard());
+			currentPlayer++;
+			if(currentPlayer == numPlayers) {
+				currentPlayer = 0;
+			}
+		}
+		this.lastCards = null;
+		this.currentTurn = 0;
+		this.setPossibleMoves();
+		this.pass = new boolean[numPlayers];
+		for(int i = 0; i < numPlayers; i++) {
+			pass[i] = false;
+		}
+	}
+	
+	public Card[] hand(int player) {
+		return this.hands[player].getHand();
+	}
+	
+	private boolean moveEqual(Card[] moveOne, Card[] moveTwo) {
+		if(moveOne.length != moveTwo.length) {
+			return false;
+		}
+		int numEqual = 0;
+		for(int i = 0; i < moveOne.length; i++) {
+			for(int j = 0; j < moveTwo.length; j++) {
+				Card cardOne = moveOne[i];
+				Card cardTwo = moveTwo[j];
+				if(cardOne.compareTo(cardTwo) == 0) {
+					numEqual++;
+					break;
+				}
+			}
+		}
+		if(numEqual == moveOne.length) {
+			return true;
+		}
+		return false;
+		
+	}
+	
+	private boolean inMoves(Card[] moveOne, ArrayList<Card[]> hand) {
+		for(int i = 0; i < hand.size(); i++) {
+			if(moveEqual(moveOne, hand.get(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private Card[] mergeCards(Card card, Card[] cards) {
+		Card[] temp = new Card[cards.length + 1];
+		temp[0] = card;
+		for(int i = 0; i < cards.length; i++) {
+			temp[i + 1] = cards[i];
+		}
+		
+		return temp;
+	}
+	
+	private ArrayList<Card[]> allCombos(ArrayList<Card> cards, int length) {
+		ArrayList<Card[]> result = new ArrayList<Card[]>();
+		if(length == 1) {
+			for(int i = 0; i < cards.size(); i++) {
+				Card[] temp = {cards.get(i)};
+				result.add(temp);
+			}
+		} else if(cards.size() == length) {
+			result.add(cards.toArray(new Card[cards.size()]));
+		} else if(cards.size() > length) {
+			Card with = cards.get(0);
+			cards.remove(0);
+			ArrayList<Card[]> lengthMinus = allCombos(cards, length - 1);
+			ArrayList<Card[]> lengthPlus = allCombos(cards, length);
+			for(int i = 0; i < lengthMinus.size(); i++) {
+				Card[] temp = mergeCards(with, lengthMinus.get(i));
+				result.add(temp);
+			}
+			result.addAll(lengthPlus);
+		} else {
+			System.out.println("Error");
+		}
+		return result;
+	}
+	
+	private boolean checkLevel(Card[] move) {
+		if(this.lastCards == null) {
+			return true;
+		} else if(this.lastCards.length != move.length) {
+			return false;
+		} else {
+			Card largest = this.lastCards[0];
+			for(int i = 1; i < this.lastCards.length; i++) {
+				if(largest.compareTo(this.lastCards[i]) == -1) {
+					largest = this.lastCards[i];
+				}
+			}
+			for(int i = 0; i < move.length; i++) {
+				if(move[i].compareTo(largest) == 1) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+	
+	// Nothing 0, Straight: 1, Flush: 2, Full House: 3, Four of a Kind: 4, Straight Flush: 5
+	private int identifyPokerMoveRank(Card[] move) {
+		if(move.length != 5) {
+			return 0;
+		}
+		boolean inOrder = true;
+		boolean sameSuit = true;
+		boolean two = false;
+		int sameRank = 0;
+		
+		Arrays.sort(move);
+		
+		Card firstCard = move[0];
+		for(int i = 1; i < move.length; i++) {
+			if(firstCard.getRank() != move[i].getRank() + i) {
+				inOrder = false;
+			}
+			if(firstCard.getSuit() != move[i].getSuit()) {
+				sameSuit = false;
+			}
+		}
+		
+		int[] ranks = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		for(int i = 0; i < move.length; i++) {
+			ranks[move[i].getRank()]++;
+		}
+		for(int i = 0; i < ranks.length; i++) {
+			if(ranks[i] > sameRank) {
+				sameRank = ranks[i];
+			}
+			if(ranks[i] == 2) {
+				two = true;
+			}
+		}
+		
+		if(inOrder && sameSuit) {
+			return 5;
+		} else if(sameRank == 4) {
+			return 4;
+		} else if(sameRank == 3 && two) {
+			return 3;
+		} else if(sameSuit) {
+			return 2;
+		} else if(inOrder) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	
+	private ArrayList<Card[]> matchRank(int numMatch) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		Card[] current = this.hands[this.currentTurn].getHand();
+		for(int i = 0; i < current.length; i++) {
+			ArrayList<Card> sameRank = new ArrayList<Card>();
+			Card cardOne = current[i];
+			sameRank.add(cardOne);
+			// Find cards of all the same rank
+			for(int j = 0; j < current.length; j++) {
+				Card cardTwo = current[j];
+				if(cardOne.sameRank(cardTwo) && !cardOne.sameSuit(cardTwo)) {
+					sameRank.add(cardTwo);
+				}
+			}
+			// Add all combinations to moves if not already in moves
+			if(sameRank.size() >= numMatch) {
+				ArrayList<Card[]> possibleMoves = allCombos(sameRank, numMatch);
+				for(int j = 0; j < possibleMoves.size(); j++) {
+					if(!inMoves(possibleMoves.get(j), moves) && this.checkLevel(possibleMoves.get(j))) {
+						moves.add(possibleMoves.get(j));
+					}
+				}
+			}
+		}
+		return moves;
+	}
+	
+	private ArrayList<Card[]> possibleSingles() {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		Card[] current = this.hands[this.currentTurn].getHand();
+		if(this.lastCards == null) {
+			for(int i = 0; i < current.length; i++) {
+				Card[] move = {current[i]};
+				moves.add(move);
+			}
+		} else if(this.lastCards.length == 1) {
+			for(int i = 0; i < current.length; i++) {
+				if(current[i].compareTo(lastCards[0]) == 1) {
+					Card[] move = {current[i]};
+					moves.add(move);
+				}
+			}
+		}
+		return moves;
+	}
+	
+	private void setPossibleMoves() {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		if(this.lastCards == null) {
+			moves.addAll(this.possibleSingles());
+			moves.addAll(this.matchRank(2));
+			moves.addAll(this.matchRank(3));
+			moves.addAll(this.matchRank(4));
+		} else if(this.lastCards.length == 1) {
+			moves.addAll(this.possibleSingles());
+		} else if(this.lastCards.length == 2) {
+			moves.addAll(this.matchRank(2));
+		} else if(this.lastCards.length == 3) {
+			moves.addAll(this.matchRank(3));
+		} else if(this.lastCards.length == 4) {
+			moves.addAll(this.matchRank(4));
+		}
+		this.possibleMoves = moves;
+	}
+	
+	private void removeFromHand(Card[] cards) {
+		for(int i = 0; i < cards.length; i++) {
+			this.hands[this.currentTurn].removeCard(cards[i]);
+		}
+	}
+	
+	private void setTurn(int move) {
+		if(move == -1) {
+			this.pass[this.currentTurn] = true;
+		}
+		int noPass = 0;
+		int nextTurn = 0;
+		for(int i = 0; i < this.pass.length; i++) {
+			if(!this.pass[i]) {
+				noPass++;
+				nextTurn = i;
+			}
+		}
+		
+		if(noPass == 1) {
+			this.currentTurn = nextTurn;
+			this.lastCards = null;
+			for(int i = 0; i < numPlayers; i++) {
+				pass[i] = false;
+			}
+		} else {
+			this.currentTurn++;
+			if(this.currentTurn >= this.numPlayers) {
+				this.currentTurn = 0;
+			}
+			while(this.pass[this.currentTurn]) {
+				this.currentTurn++;
+				if(this.currentTurn >= this.numPlayers) {
+					this.currentTurn = 0;
+				}
+			}
+		}
+		this.setPossibleMoves();
+	}
+
+	@Override
+	public ArrayList<Card[]> possibleMoves() {
+		return this.possibleMoves;
+	}
+
+	@Override
+	public Boolean applyMove(int move) {
+		if(move >= -1 && move < this.possibleMoves.size()) {
+			if(move != -1) {
+				this.lastCards = this.possibleMoves.get(move);
+				this.removeFromHand(this.lastCards);
+				if(this.hands[this.currentTurn].getHand().length == 0) {
+					this.currentTurn = -1;
+					return true;
+				}
+			}
+			this.setTurn(move);
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public int currentTurn() {
+		return this.currentTurn;
+	}
+	
+	public Card[] currentHand() {
+		return this.hands[this.currentTurn].getHand();
+	}
+
+	@Override
+	public String gameView() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}
