@@ -177,8 +177,47 @@ public class BigTwo extends Game {
 		}
 	}
 	
+	private ArrayList<Card[]> straightCombo(Card starting, ArrayList<Card> hand, int length) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		if(length == 0) {
+			Card[] temp = {starting};
+			moves.add(temp);
+			return moves;
+		}
+		
+		ArrayList<Card> next = new ArrayList<Card>();
+		for(int i = 0; i < hand.size(); i++) {
+			Card card = hand.get(i);
+			if(card.getRank() == starting.getRank() + 1) {
+				next.add(card);
+			}
+		}
+		
+		for(int i = 0; i < next.size(); i++) {
+			ArrayList<Card[]> combos = straightCombo(next.get(i), hand, length - 1);
+			
+			for(int j = 0; j < combos.size(); j++) {
+				Card[] temp = mergeCards(starting, combos.get(j));
+				moves.add(temp);
+			}
+		}
+		
+		return moves;
+	}
+	
 	private ArrayList<Card[]> pokerStraight(Card[] hand) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		ArrayList<Card> cards = new ArrayList<Card>();
+		
+		for(int i = 0; i < hand.length; i++) {
+			cards.add(hand[i]);
+		}
+		
+		for(int i = 0; i < hand.length; i++) {
+			moves.addAll(this.straightCombo(hand[i], cards, 4));
+		}
 		
 		return moves;
 	}
@@ -226,7 +265,6 @@ public class BigTwo extends Game {
 							moves.add(move);
 						}
 					}
-					//moves.addAll(allCombos(allOfSuit, 5));
 				}
 			}
 		}
