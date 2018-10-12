@@ -100,8 +100,6 @@ public class BigTwo extends Game {
 				result.add(temp);
 			}
 			result.addAll(lengthPlus);
-		} else {
-			System.out.println("Error");
 		}
 		return result;
 	}
@@ -190,6 +188,35 @@ public class BigTwo extends Game {
 		for(int i = 0; i < hand.size(); i++) {
 			Card card = hand.get(i);
 			if(card.getRank() == starting.getRank() + 1) {
+				next.add(card);
+			}
+		}
+		
+		for(int i = 0; i < next.size(); i++) {
+			ArrayList<Card[]> combos = straightCombo(next.get(i), hand, length - 1);
+			
+			for(int j = 0; j < combos.size(); j++) {
+				Card[] temp = mergeCards(starting, combos.get(j));
+				moves.add(temp);
+			}
+		}
+		
+		return moves;
+	}
+	
+	private ArrayList<Card[]> sFlushCombo(Card starting, ArrayList<Card> hand, int length) {
+		ArrayList<Card[]> moves = new ArrayList<Card[]>();
+		
+		if(length == 0) {
+			Card[] temp = {starting};
+			moves.add(temp);
+			return moves;
+		}
+		
+		ArrayList<Card> next = new ArrayList<Card>();
+		for(int i = 0; i < hand.size(); i++) {
+			Card card = hand.get(i);
+			if(card.getRank() == starting.getRank() + 1 && card.getSuit() == starting.getRank()) {
 				next.add(card);
 			}
 		}
@@ -358,9 +385,33 @@ public class BigTwo extends Game {
 		
 		return moves;
 	}
+	
 	private ArrayList<Card[]> pokerSFlush(Card[] hand) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
 		
+		int lastRank = this.identifyPokerMoveRank(this.lastCards);
+		Card toBeat = null;
+		// Get the rank to beat if previous move is a Flush
+		if(lastRank == 5) {
+			toBeat = this.lastCards[4];
+		}
+
+		if(lastRank <= 5) {
+			ArrayList<Card> cards = new ArrayList<Card>();
+			for(int i = 0; i < hand.length; i++) {
+				cards.add(hand[i]);
+			}
+			
+			for(int i = 0; i < hand.length; i++) {
+				ArrayList<Card[]> result = this.sFlushCombo(hand[i], cards, 4);
+				for(int j = 0; j < result.size(); j++) {
+					Card[] combo = result.get(j);
+					if(toBeat == null || toBeat.compareTo(combo[4]) == -1) {
+						moves.add(combo);
+					}
+				}
+			}
+		}
 		return moves;
 	}
 	
