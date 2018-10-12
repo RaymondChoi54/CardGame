@@ -209,16 +209,29 @@ public class BigTwo extends Game {
 	private ArrayList<Card[]> pokerStraight(Card[] hand) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
 		
-		ArrayList<Card> cards = new ArrayList<Card>();
-		
-		for(int i = 0; i < hand.length; i++) {
-			cards.add(hand[i]);
+		int lastRank = this.identifyPokerMoveRank(this.lastCards);
+		Card toBeat = null;
+		// Get the rank to beat if previous move is a Flush
+		if(lastRank == 1) {
+			toBeat = this.lastCards[4];
 		}
-		
-		for(int i = 0; i < hand.length; i++) {
-			moves.addAll(this.straightCombo(hand[i], cards, 4));
+
+		if(lastRank <= 1) {
+			ArrayList<Card> cards = new ArrayList<Card>();
+			for(int i = 0; i < hand.length; i++) {
+				cards.add(hand[i]);
+			}
+			
+			for(int i = 0; i < hand.length; i++) {
+				ArrayList<Card[]> result = this.straightCombo(hand[i], cards, 4);
+				for(int j = 0; j < result.size(); j++) {
+					Card[] combo = result.get(j);
+					if(toBeat == null || toBeat.compareTo(combo[4]) == -1) {
+						moves.add(combo);
+					}
+				}
+			}
 		}
-		
 		return moves;
 	}
 	
