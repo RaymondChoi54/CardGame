@@ -523,8 +523,16 @@ public class BigTwo extends Game {
 
 	@Override
 	public String gameView() {
-		// TODO Auto-generated method stub
-		return null;
+		String result = "";
+		result += "It is player " + (this.currentTurn() + 1) + "'s turn\n";
+		Card[] hand = this.currentHand();
+		Arrays.sort(hand);
+		result += Arrays.toString(hand) + '\n';
+		ArrayList<Card[]> moves = this.possibleMoves();
+		for(int i = 0; i < moves.size(); i++) {
+			result += i + " " + Arrays.toString(moves.get(i)) + '\n';
+		}
+		return result;
 	}
 
 }
