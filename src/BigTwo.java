@@ -231,6 +231,35 @@ public class BigTwo extends Game {
 	private ArrayList<Card[]> pokerFourKind(Card[] hand) {
 		ArrayList<Card[]> moves = new ArrayList<Card[]>();
 		
+		int lastRank = this.identifyPokerMoveRank(this.lastCards);
+		int toBeat = -1;
+		// Get the rank to beat if previous move is a Full House
+		if(lastRank == 4) {
+			int[] ranks = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+			for(int i = 0; i < this.lastCards.length; i++) {
+				ranks[this.lastCards[i].getRank()]++;
+			}
+			for(int i = 0; i < ranks.length; i++) {
+				if(ranks[i] == 4) {
+					toBeat = i;
+				}
+			}
+		}
+		
+		if(this.lastCards == null || lastRank <= 4) {
+			ArrayList<Card[]> quads = this.matchRank(4, true);
+			for(int i = 0; i < quads.size(); i++) {
+				Card[] quad = quads.get(i);
+				for(int j = 0; j < hand.length; j++) {
+					Card single = hand[j];
+					if(quad[0].getRank() != single.getRank() && (lastRank < 4 || quad[0].getRank() > toBeat)) {
+						Card[] temp = {quad[0], quad[1], quad[2], quad[3], single};
+						moves.add(temp);
+					}
+				}
+			}
+		}
+		
 		return moves;
 	}
 	private ArrayList<Card[]> pokerSFlush(Card[] hand) {
